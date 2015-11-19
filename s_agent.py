@@ -2,7 +2,8 @@ import sys
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging
+#import oslo_messaging
+from six import moves
 
 from neutron.common import utils
 from neutron.common import config as common_config
@@ -10,6 +11,7 @@ from neutron.i18n import _LE, _LI, _LW
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.agent.linux import ip_lib
 from neutron.agent.common import config as agent_conf
+from neutron.common import constants as q_const
 
 LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('AGENT', 'vmware_conf')
@@ -32,29 +34,42 @@ def create_agent_config_map(config):
         bridge_mappings=bridge_mappings,
         polling_interval=config.AGENT.polling_interval,
         minimize_polling=config.AGENT.minimize_polling,
-        tunnel_types=config.AGENT.tunnel_types,
+#        tunnel_types=config.AGENT.tunnel_types,
         veth_mtu=config.AGENT.veth_mtu,
-        enable_distributed_routing=config.AGENT.enable_distributed_routing,
-        l2_population=config.AGENT.l2_population,
-        arp_responder=config.AGENT.arp_responder,
-        prevent_arp_spoofing=config.AGENT.prevent_arp_spoofing,
+#        enable_distributed_routing=config.AGENT.enable_distributed_routing,
+#        l2_population=config.AGENT.l2_population,
+#        arp_responder=config.AGENT.arp_responder,
+#        prevent_arp_spoofing=config.AGENT.prevent_arp_spoofing,
         quitting_rpc_timeout=config.AGENT.quitting_rpc_timeout,
     )
     return kwargs
 
 class SimpleAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
-    target = oslo_messaging.Target(version='1.2')
+#    target = oslo_messaging.Target(version='1.2')
 
     def __init__(self, vsphere_hostname, vsphere_login, vsphere_password,
-                 bridge_mappings, polling_interval, tunnel_types=None,
-                 veth_mtu=None, l2_population=False,
-                 enable_distributed_routing=False,
+                 bridge_mappings, polling_interval,
+                 veth_mtu=None,
                  minimize_polling=False,
-                 arp_responder=False,
-                 prevent_arp_spoofing=True,
                  quitting_rpc_timeout=None):
-        pass
+        super(SimpleAgent, self).__init__()
+        self.veth_mtu = veth_mtu
+        self.available_local_vlans = set(moves.xrange(q_const.MIN_VLAN_TAG,
+                                                      q_const.MAX_VLAN_TAG))
+        # TODO(ethuleau): Change ARP responder so it's not dependent on the
+        #                 ML2 l2 population mechanism driver.
+        self.agent_state = {
+            'binary': 'neutron-dvs-agent',
+            'host': 'test-host',
+            'topic': q_const.L2_AGENT_TOPIC,
+            'configurations': {'bridge_mappings': bridge_mappings,
+                               'vsphere_hostname': vsphere_hostname,
+                               'log_agent_heartbeats':
+                               cfg.CONF.AGENT.log_agent_heartbeats},
+            'agent_type': 'DVS agent',
+            'start_flag': True}
+        print self.agent_state
 
 def main():
 
@@ -70,7 +85,6 @@ def main():
         LOG.error(_LE('%s Agent terminated!'), e)
         sys.exit(1)
 
-    print agent_config
     try:
         agent = SimpleAgent(**agent_config)
     except RuntimeError as e:
