@@ -8,28 +8,6 @@ DEFAULT_VLAN_RANGES = []
 DEFAULT_TUNNEL_RANGES = []
 DEFAULT_TUNNEL_TYPES = []
 
-ovs_opts = [
-    cfg.StrOpt('integration_bridge', default='br-int',
-               help=_("Integration bridge to use.")),
-    cfg.StrOpt('tunnel_bridge', default='br-tun',
-               help=_("Tunnel bridge to use.")),
-    cfg.StrOpt('int_peer_patch_port', default='patch-tun',
-               help=_("Peer patch port in integration bridge for tunnel "
-                      "bridge.")),
-    cfg.StrOpt('tun_peer_patch_port', default='patch-int',
-               help=_("Peer patch port in tunnel bridge for integration "
-                      "bridge.")),
-    cfg.IPOpt('local_ip', version=4,
-              help=_("Local IP address of tunnel endpoint.")),
-    cfg.ListOpt('bridge_mappings',
-                default=DEFAULT_BRIDGE_MAPPINGS,
-                help=_("List of <physical_network>:<bridge>. "
-                       "Deprecated for ofagent.")),
-    cfg.BoolOpt('use_veth_interconnection', default=False,
-                help=_("Use veths instead of patch ports to interconnect the "
-                       "integration bridge to physical bridges.")),
-]
-
 agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
@@ -80,12 +58,17 @@ agent_opts = [
 ]
 
 vmware_opts = [
-    cfg.BoolOpt('test', default=True,
-                help=_("Drop all flows during agent start for a clean flow "
-                       "tables resetting"))
+    cfg.StrOpt('vsphere_login', default='administrator',
+               help=_("Vsphere login.")),
+    cfg.ListOpt('network_maps',
+               default=DEFAULT_BRIDGE_MAPPINGS,
+               help=_("List of <physical_network>:<bridge>.")),
+    cfg.StrOpt('vsphere_hostname', default='vsphere',
+               help=_("Vsphere host name or IP.")),
+    cfg.StrOpt('vsphere_password', default='',
+               help=_("Vsphere password.")),
 ]
 
-cfg.CONF.register_opts(ovs_opts, "OVS")
 cfg.CONF.register_opts(agent_opts, "AGENT")
 cfg.CONF.register_opts(vmware_opts, "ML2_VMWARE")
 config.register_agent_state_opts_helper(cfg.CONF)
