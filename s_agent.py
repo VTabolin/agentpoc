@@ -34,12 +34,7 @@ def create_agent_config_map(config):
         bridge_mappings=bridge_mappings,
         polling_interval=config.AGENT.polling_interval,
         minimize_polling=config.AGENT.minimize_polling,
-#        tunnel_types=config.AGENT.tunnel_types,
         veth_mtu=config.AGENT.veth_mtu,
-#        enable_distributed_routing=config.AGENT.enable_distributed_routing,
-#        l2_population=config.AGENT.l2_population,
-#        arp_responder=config.AGENT.arp_responder,
-#        prevent_arp_spoofing=config.AGENT.prevent_arp_spoofing,
         quitting_rpc_timeout=config.AGENT.quitting_rpc_timeout,
     )
     return kwargs
@@ -61,7 +56,7 @@ class SimpleAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         #                 ML2 l2 population mechanism driver.
         self.agent_state = {
             'binary': 'neutron-dvs-agent',
-            'host': 'test-host',
+            'host': cfg.CONF.host,
             'topic': q_const.L2_AGENT_TOPIC,
             'configurations': {'bridge_mappings': bridge_mappings,
                                'vsphere_hostname': vsphere_hostname,
